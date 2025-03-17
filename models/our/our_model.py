@@ -5,11 +5,12 @@ from collections import OrderedDict
 import torch.nn.functional as F
 from models.base_model import BaseModel
 from models.networks.lstm import LSTMEncoder
-from models.networks.classifier import FcClassifier
+from models.networks.classifier import FcClassifier, LSTMClassifier
 from models.utils.config import OptConfig
 import math
 import torch.nn as nn
-
+from models.net_use.block_fusion import Block
+from models.net_use.gan_vae import Generator, Discriminator
 
 class ourModel(BaseModel, nn.Module):
 
@@ -30,8 +31,13 @@ class ourModel(BaseModel, nn.Module):
         self.model_names.append('EmoA')
 
         # visual model
+        self.embd_size_v = opt.embd_size_v
+        self.gen = Generator(opt.feature_max_len * opt.embd_size_v, 2048)
+        self.dis = Discriminator(opt.feature_max_len * opt.embd_size_v)
         self.netEmoV = LSTMEncoder(opt.input_dim_v, opt.embd_size_v, opt.embd_method_v)
         self.model_names.append('EmoV')
+
+        self.netFusion = Block(opt.input_dim_merge, opt.output_dim_merge)
 
         # Transformer Fusion model
         emo_encoder_layer = torch.nn.TransformerEncoderLayer(d_model=opt.hidden_size, nhead=int(opt.Transformer_head), batch_first=True)
@@ -126,13 +132,22 @@ class ourModel(BaseModel, nn.Module):
         emo_feat_A = self.netEmoA(self.acoustic)
         emo_feat_V = self.netEmoV(self.visual)
 
+        batch_size = emo_feat_V.size(0)
+        vis_feat = emo_feat_V.reshape(batch_size, -1)
+        feat_rec, feat_inv, self.distance = self.gen(vis_feat)
+        feat_rec = feat_rec.reshape(batch_size, -1, self.embd_size_v)
+        #print(self.visual.shape, feat_rec.shape, feat_inv.shape, self.distance.shape)
+
+
         '''insure time dimension modification'''
-        emo_fusion_feat = torch.cat((emo_feat_V, emo_feat_A), dim=-1) # (batch_size, seq_len, 2 * embd_size)
+        emo_fusion_feat = self.netFusion(feat_rec, emo_feat_A)
+        #emo_fusion_feat = torch.cat((emo_feat_V, emo_feat_A), dim=-1) # (batch_size, seq_len, 2 * embd_size)
         
         emo_fusion_feat = self.netEmoFusion(emo_fusion_feat)
         
         '''dynamic acquisition of bs'''
         batch_size = emo_fusion_feat.size(0)
+
 
         emo_fusion_feat = emo_fusion_feat.permute(1, 0, 2).reshape(batch_size, -1)  # turn into [batch_size, feature_dim] 1028
 
@@ -150,7 +165,11 @@ class ourModel(BaseModel, nn.Module):
         """Calculate the loss for back propagation"""
         self.loss_emo_CE = self.criterion_ce(self.emo_logits, self.emo_label) 
         self.loss_EmoF_CE = self.focal_weight * self.criterion_focal(self.emo_logits_fusion, self.emo_label)
-        loss = self.loss_emo_CE + self.loss_EmoF_CE
+        dis_weight = 0.0025
+        dis_loss = torch.mean(-0.5 * torch.sum(self.distance, dim=1), dim=0)
+        self.loss_enhance = dis_weight * dis_loss
+
+        loss = self.loss_emo_CE + self.loss_EmoF_CE + self.loss_enhance
 
         loss.backward()
 

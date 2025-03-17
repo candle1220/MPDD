@@ -4,13 +4,13 @@ set -e
 # Default Training Parameters
 data_rootpath="/home/oem/MPDD-2025/MPDD-Young" # Dataset root directory
 AUDIOFEATURE_METHOD="opensmile" # Audio feature type, options {wav2vec, opensmile, mfccs}
-VIDEOLFEATURE_METHOD="openface" # Video feature type, options {openface, resnet, densenet}
+VIDEOLFEATURE_METHOD="densenet" # Video feature type, options {openface, resnet, densenet}
 SPLITWINDOW="1s" # Window duration, options {"1s", "5s"}
 LABELCOUNT=2 # Number of label categories, options {2, 3, 5}
 TRACK_OPTION="Track2"
 FEATURE_MAX_LEN=25 # Set maximum feature length; pad with zeros if insufficient, truncate if exceeding
 BATCH_SIZE=8
-LR=0.0001
+LR=0.00006
 NUM_EPOCHS=500
 DEVICE="cuda" # Options {cuda, cpu}
 

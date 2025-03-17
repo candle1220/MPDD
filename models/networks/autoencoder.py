@@ -37,6 +37,7 @@ class LSTMAutoencoder(nn.Module):
         self.false_teacher_rate = opt.false_teacher_rate # use the label instead of the output of previous time step
         super().__init__()
         self.encoder = nn.LSTMCell(self.input_size, self.hidden_size)
+
         self.enc_fc = nn.Linear(self.hidden_size, self.embedding_size)
         self.decoder = nn.LSTMCell(self.hidden_size + self.input_size, self.input_size)
         self.dec_fc = nn.Linear(self.embedding_size, self.hidden_size)

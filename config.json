@@ -6,6 +6,9 @@
     "input_dim_v": 1000,
     "embd_size_v": 128,
     "embd_method_v": "maxpool",
+
+    "input_dim_merge": 128,
+    "output_dim_merge": 256,
     
     "emo_output_dim": 5,
     
@@ -18,7 +21,7 @@
 
     
     "Transformer_head": 2,
-    "Transformer_layers": 1,
+    "Transformer_layers": 2,
     "hidden_size": 256,
     
     "attention_head": 1,

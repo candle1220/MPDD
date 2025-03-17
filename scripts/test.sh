@@ -2,16 +2,16 @@
 set -e
 
 # Default Training Parameters
-DATA_ROOTPATH="E:/MDPP_data/MPDD-Elderly"
-TRAIN_MODEL="D:/HACI/MMchallenge/MEIJU2025-baseline-master/MPDD/checkpoints/1s_5labels_opensmile+densenet/best_model_2025-02-13-21.12.01.pth"
-AUDIOFEATURE_METHOD="opensmile" # Audio feature type, options {wav2vec, opensmile, mfccs}
-VIDEOLFEATURE_METHOD="densenet" # Video feature type, options {openface, resnet, densenet}
+DATA_ROOTPATH="/home/oem/MPDD-2025/MPDD-Elderly"
+TRAIN_MODEL="/home/oem/kyf/mpdd_block/checkpoints/1s_2labels_mfccs+openface/best_model_2025-03-13-14.20.17.pth"
+AUDIOFEATURE_METHOD="mfccs" # Audio feature type, options {wav2vec, opensmile, mfccs}
+VIDEOLFEATURE_METHOD="openface" # Video feature type, options {openface, resnet, densenet}
 SPLITWINDOW="1s" # Window duration, options {"1s", "5s"}
-LABELCOUNT=5 # Number of label categories, options {2, 3, 5}
+LABELCOUNT=2 # Number of label categories, options {2, 3, 5}
 TRACK_OPTION="Track1"
 FEATURE_MAX_LEN=26 # Set maximum feature length; pad with zeros if insufficient, truncate if exceeding. For Track1, options {26, 5}; for Track2, options {25, 5}
-BATCH_SIZE=1
-DEVICE="cpu"
+BATCH_SIZE=8
+DEVICE="cuda"
 
 for arg in "$@"; do
   case $arg in
